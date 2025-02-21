@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hameds Home PLC Project</title>
+    
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self'; 
+        style-src 'self' 'unsafe-inline'; 
+        script-src 'self' 'unsafe-inline';
+        font-src 'self' data: https: http:;
+    ">
+    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="assets/css/tabulator.min.css">
+    <script type="text/javascript" src="assets/js/tabulator.min.js"></script>
+    <link rel="stylesheet" href="node_modules/simple-keyboard/build/css/index.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Hameds Home PLC Project</h1>
+        
+        <div class="status-container">
+            <div id="status">Initializing...</div>
+            <button id="toggleSettings" class="toggle-btn">Settings</button>
+        </div>
+
+        <div id="settingsModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="modal-drag-handle">⋮⋮</span>
+                    <span class="modal-title">PLC Settings</span>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="plcIpAddress">PLC IP Address:</label>
+                        <input type="text" id="plcIpAddress" placeholder="192.168.0.99" readonly>
+                        <div class="numeric-keypad">
+                            <div class="keypad-row">
+                                <button class="num-key">1</button>
+                                <button class="num-key">2</button>
+                                <button class="num-key">3</button>
+                            </div>
+                            <div class="keypad-row">
+                                <button class="num-key">4</button>
+                                <button class="num-key">5</button>
+                                <button class="num-key">6</button>
+                            </div>
+                            <div class="keypad-row">
+                                <button class="num-key">7</button>
+                                <button class="num-key">8</button>
+                                <button class="num-key">9</button>
+                            </div>
+                            <div class="keypad-row">
+                                <button class="num-key">.</button>
+                                <button class="num-key">0</button>
+                                <button class="num-key backspace">⌫</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="connectBtn">Connect</button>
+                    <button id="settingsCancel">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-container">
+            <!-- System Controls Section -->
+            <h2>System Controls</h2>
+            <div id="controlsGrid"></div>
+
+            <!-- Digital Inputs Section -->
+            <h2>Digital Inputs</h2>
+            <div id="digitalInputsGrid"></div>
+
+            <!-- Digital Outputs Section -->
+            <h2>Digital Outputs</h2>
+            <div id="digitalOutputsGrid"></div>
+
+            <!-- Analog Section -->
+            <h2>Analog I/O</h2>
+            <div id="analogGrid"></div>
+
+            <!-- Statistics Section -->
+            <h2>Statistics</h2>
+            <div id="statsGrid"></div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-drag-handle">⋮⋮</span>
+                <span class="modal-title">Edit Value</span>
+            </div>
+            <div class="modal-body">
+                <label id="editLabel">Enter new value:</label>
+                <input type="text" id="editInput" readonly>
+                <!-- Add numeric keypad -->
+                <div class="numeric-keypad">
+                    <div class="keypad-row">
+                        <button class="num-key">1</button>
+                        <button class="num-key">2</button>
+                        <button class="num-key">3</button>
+                    </div>
+                    <div class="keypad-row">
+                        <button class="num-key">4</button>
+                        <button class="num-key">5</button>
+                        <button class="num-key">6</button>
+                    </div>
+                    <div class="keypad-row">
+                        <button class="num-key">7</button>
+                        <button class="num-key">8</button>
+                        <button class="num-key">9</button>
+                    </div>
+                    <div class="keypad-row">
+                        <button class="num-key">.</button>
+                        <button class="num-key">0</button>
+                        <button class="num-key backspace">⌫</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="editSave">Save</button>
+                <button id="editCancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>
