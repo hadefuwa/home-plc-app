@@ -3,14 +3,6 @@ I've made this Electron.js application for connecting to Siemens S7 PLCs, design
 
 ![image](https://github.com/user-attachments/assets/0fe3451c-b59e-4d90-9411-b2fccfefeb7c)
 
-## Features
-
-- ✅ **Siemens S7-1200/1500 support** via `nodes7`
-- ✅ **Real-time I/O monitoring & control**
-- ✅ **HMI-style interface with multiple views**
-- ✅ **Data logging for troubleshooting & analysis**
-- ✅ **Cross-platform (Windows, Mac, Linux)**
-
 ## Getting Started
 
 Clone the repo and install dependencies:
