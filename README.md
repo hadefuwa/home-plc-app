@@ -1,5 +1,6 @@
 # home-plc-app
 I've made this Electron.js application for connecting to Siemens S7 PLCs, designed for PLC training rigs and custom HMI development. This app enables real-time monitoring, control, and data logging from your PLC, making it ideal for industrial training setups and automation projects.
+
 ![image](https://github.com/user-attachments/assets/0fe3451c-b59e-4d90-9411-b2fccfefeb7c)
 
 ## Features
