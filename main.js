@@ -21,7 +21,7 @@ conn.silent = true;  // Set silent mode immediately after creation
 const { exec } = require('child_process');
 const os = require('os');
 const fs = require('fs');
-const configPath = path.join(__dirname, 'config.json');
+const configPath = path.join(app.getPath('userData'), 'config.json');
 
 let mainWindow;
 let isConnected = false;  // Add a connection state flag
