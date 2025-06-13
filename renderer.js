@@ -50,7 +50,7 @@ function editValue(tag) {
 }
 
 // Wait for DOM to be fully loaded before running any code
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // Get all DOM elements we need
     statusElement = document.getElementById('status');  // Assign to our global variable
     const toggleSettings = document.getElementById('toggleSettings');
@@ -165,6 +165,38 @@ document.addEventListener('DOMContentLoaded', () => {
     function timeout(ms) {
         return new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), ms));
     }
+
+    // Load PLC IP from config
+    const config = await ipcRenderer.invoke('get-config');
+    ipInput.value = config.plcIp || '192.168.0.99';
+
+    // Save PLC IP to config when changed
+    connectBtn.addEventListener('click', async () => {
+        const ipAddress = ipInput.value;
+        await ipcRenderer.invoke('set-config', { plcIp: ipAddress });
+    });
+
+    // Add Check for Updates button logic
+    document.getElementById('checkUpdatesBtn').addEventListener('click', async () => {
+        // Get current version
+        const currentVersion = await ipcRenderer.invoke('get-app-version');
+        // Fetch latest commit from GitHub
+        fetch('https://api.github.com/repos/hadefuwa/home-plc-app/commits/main', {
+            headers: { 'User-Agent': 'ElectronApp' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.commit && data.commit.committer && data.commit.committer.date) {
+                const date = new Date(data.commit.committer.date);
+                alert(`Latest update on GitHub: ${date.toLocaleString()}`);
+            } else {
+                alert('Could not fetch update info.');
+            }
+        })
+        .catch(() => {
+            alert('Could not check for updates (offline or error).');
+        });
+    });
 
     // Update the connect button handler
     connectBtn.addEventListener('click', async () => {
@@ -296,6 +328,9 @@ document.addEventListener('DOMContentLoaded', () => {
     ipcRenderer.invoke('get-plc-tags').then(tags => {
         updateTables(tags);
     });
+
+    // Show version and last update info
+    showVersionInfo();
 });
 
 // Helper function for numeric keypad
@@ -833,4 +868,26 @@ function updateDarkModeButton(isDark) {
 }
 
 // Initialize dark mode when the document is ready
-document.addEventListener('DOMContentLoaded', initializeDarkMode); 
+document.addEventListener('DOMContentLoaded', initializeDarkMode);
+
+// Add this function at the end of the file
+function showVersionInfo() {
+    // Get version from package.json (injected by main process)
+    ipcRenderer.invoke('get-app-version').then(version => {
+        document.getElementById('appVersion').textContent = `Version: ${version}`;
+    });
+    // Get last updated date from GitHub
+    fetch('https://api.github.com/repos/hadefuwa/home-plc-app/commits/main', {
+        headers: { 'User-Agent': 'ElectronApp' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data && data.commit && data.commit.committer && data.commit.committer.date) {
+            const date = new Date(data.commit.committer.date);
+            document.getElementById('lastUpdated').textContent = `Last updated: ${date.toLocaleString()}`;
+        }
+    })
+    .catch(() => {
+        document.getElementById('lastUpdated').textContent = 'Last updated: (offline)';
+    });
+} 

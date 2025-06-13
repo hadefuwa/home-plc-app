@@ -20,6 +20,8 @@ const conn = new nodes7();
 conn.silent = true;  // Set silent mode immediately after creation
 const { exec } = require('child_process');
 const os = require('os');
+const fs = require('fs');
+const configPath = path.join(__dirname, 'config.json');
 
 let mainWindow;
 let isConnected = false;  // Add a connection state flag
@@ -454,6 +456,24 @@ const plcTags = [
     },
 ];
 
+// Helper to load config
+function loadConfig() {
+    if (!fs.existsSync(configPath)) {
+        // Default config
+        const defaultConfig = { plcIp: '192.168.0.99' };
+        fs.writeFileSync(configPath, JSON.stringify(defaultConfig, null, 2));
+        return defaultConfig;
+    }
+    return JSON.parse(fs.readFileSync(configPath, 'utf8'));
+}
+
+// Helper to save config
+function saveConfig(config) {
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+}
+
+let appConfig = loadConfig();
+
 // Function to check connection status
 function checkConnection() {
     if (isConnected) {
@@ -593,7 +613,7 @@ function createWindow() {
     // Attempt to connect automatically after window loads
     mainWindow.webContents.on('did-finish-load', async () => {
         try {
-            const result = await connectToPLC('192.168.0.99'); // Default IP address
+            const result = await connectToPLC(appConfig.plcIp || '192.168.0.99');
             mainWindow.webContents.send('auto-connect-result', {
                 success: true,
                 message: result
@@ -887,4 +907,22 @@ function checkForUpdates() {
         req.end();
     });
 }
-// END: Simple update check function 
+// END: Simple update check function
+
+// Add IPC handler to get app version
+ipcMain.handle('get-app-version', async () => {
+    const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
+    return packageJson.version;
+});
+
+// IPC to get config
+ipcMain.handle('get-config', async () => {
+    return appConfig;
+});
+
+// IPC to set config
+ipcMain.handle('set-config', async (event, newConfig) => {
+    appConfig = { ...appConfig, ...newConfig };
+    saveConfig(appConfig);
+    return appConfig;
+}); 
