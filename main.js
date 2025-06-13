@@ -30,10 +30,10 @@ let keyboardTimer = null;
 // Connection parameters for the PLC
 let connectionParams = {
     host: '192.168.0.1', // Default IP address
-    port: 102,           // Add default S7 communication port
+    port: 102,           // S7 communication port
     rack: 0,
     slot: 1,
-    debug: false  // Add this to disable debug messages
+    debug: true  // Enable debug for troubleshooting
 };
 
 // Define PLC data structure
@@ -507,16 +507,21 @@ async function connectToPLC(ipAddress) {
             }
         }
         
-        // Set silent mode and debug false before connecting
-        conn.silent = true;
-        conn.globalDebug = false;
+        // Enable debug mode temporarily for troubleshooting
+        conn.silent = false;
+        conn.globalDebug = true;
+        
+        console.log('Attempting to connect to PLC at:', ipAddress);
+        console.log('Connection parameters:', connectionParams);
         
         conn.initiateConnection(connectionParams, (err) => {
             if (err) {
                 isConnected = false;
+                console.error('PLC Connection Error:', err);
                 reject(err);
             } else {
                 isConnected = true;
+                console.log('Successfully connected to PLC');
                 // Start periodic reading of all tags
                 setInterval(readAllTags, 1000); // Read every second
                 resolve('Connected to PLC');
@@ -561,6 +566,10 @@ function createWindow() {
     mainWindow.once('ready-to-show', () => {
         mainWindow.maximize();
         mainWindow.show();
+
+        // BEGIN: Simple update check
+        checkForUpdates();
+        // END: Simple update check
     });
 
     // Add CSP headers with more permissive font-src
@@ -828,4 +837,54 @@ ipcMain.handle('disconnect-plc', async () => {
     } catch (error) {
         throw new Error(`Failed to disconnect: ${error.message}`);
     }
-}); 
+});
+
+// BEGIN: Simple update check function
+function checkForUpdates() {
+    // Check for internet connection first
+    require('dns').resolve('github.com', function(err) {
+        if (err) {
+            // No internet, skip update check
+            return;
+        }
+        // Fetch latest commit hash from GitHub
+        const https = require('https');
+        const options = {
+            hostname: 'api.github.com',
+            path: '/repos/hadefuwa/home-plc-app/commits/main',
+            method: 'GET',
+            headers: { 'User-Agent': 'ElectronApp' }
+        };
+        const req = https.request(options, res => {
+            let data = '';
+            res.on('data', chunk => { data += chunk; });
+            res.on('end', () => {
+                try {
+                    const json = JSON.parse(data);
+                    const latestHash = json.sha;
+                    // Get local commit hash
+                    const { exec } = require('child_process');
+                    exec('git rev-parse HEAD', (error, stdout) => {
+                        if (error) return;
+                        const localHash = stdout.trim();
+                        if (localHash !== latestHash) {
+                            // Show popup if update is available
+                            const { dialog } = require('electron');
+                            dialog.showMessageBox(mainWindow, {
+                                type: 'info',
+                                title: 'Update Available',
+                                message: 'A new update is available on GitHub. Please pull the latest version.',
+                                buttons: ['OK']
+                            });
+                        }
+                    });
+                } catch (e) {
+                    // Ignore JSON parse errors
+                }
+            });
+        });
+        req.on('error', () => {}); // Ignore network errors
+        req.end();
+    });
+}
+// END: Simple update check function 

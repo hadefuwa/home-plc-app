@@ -70,7 +70,10 @@ document.addEventListener('DOMContentLoaded', () => {
         layout: "fitColumns",
         columns: getControlsColumns(),
         data: [],
-        placeholder: "No Controls Available"
+        placeholder: "No Controls Available",
+        headerVisible: true,
+        columnHeaderVertAlign: "middle",
+        columnHeaderSortMulti: false
     });
 
     digitalInputsTable = new Tabulator("#digitalInputsGrid", {
@@ -78,7 +81,10 @@ document.addEventListener('DOMContentLoaded', () => {
         layout: "fitColumns",
         columns: getIOColumns(),
         data: [],
-        placeholder: "No Digital Inputs Available"
+        placeholder: "No Digital Inputs Available",
+        headerVisible: true,
+        columnHeaderVertAlign: "middle",
+        columnHeaderSortMulti: false
     });
 
     digitalOutputsTable = new Tabulator("#digitalOutputsGrid", {
@@ -86,7 +92,10 @@ document.addEventListener('DOMContentLoaded', () => {
         layout: "fitColumns",
         columns: getIOColumns(),
         data: [],
-        placeholder: "No Digital Outputs Available"
+        placeholder: "No Digital Outputs Available",
+        headerVisible: true,
+        columnHeaderVertAlign: "middle",
+        columnHeaderSortMulti: false
     });
 
     analogTable = new Tabulator("#analogGrid", {
@@ -94,7 +103,10 @@ document.addEventListener('DOMContentLoaded', () => {
         layout: "fitColumns",
         columns: getAnalogColumns(),
         data: [],
-        placeholder: "No Analog I/O Available"
+        placeholder: "No Analog I/O Available",
+        headerVisible: true,
+        columnHeaderVertAlign: "middle",
+        columnHeaderSortMulti: false
     });
 
     statsTable = new Tabulator("#statsGrid", {
@@ -102,7 +114,10 @@ document.addEventListener('DOMContentLoaded', () => {
         layout: "fitColumns",
         columns: getStatsColumns(),
         data: [],
-        placeholder: "No Statistics Available"
+        placeholder: "No Statistics Available",
+        headerVisible: true,
+        columnHeaderVertAlign: "middle",
+        columnHeaderSortMulti: false
     });
 
     // Event listeners
@@ -116,11 +131,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.connected) {
             lastKnownGoodIp = ipInput.value; // Save successful IP
             statusElement.textContent = 'Connected to PLC';
+            statusElement.className = '';
             statusElement.style.backgroundColor = '#dff0d8';
+            statusElement.style.color = 'var(--text-primary)';
+            statusElement.style.border = '1px solid rgba(40, 167, 69, 0.3)';
             connectBtn.disabled = true;
         } else {
             statusElement.textContent = data.error;
-            statusElement.style.backgroundColor = '#f2dede';
+            statusElement.className = '';
+            statusElement.style.backgroundColor = 'rgba(220, 53, 69, 0.2)';
+            statusElement.style.color = 'var(--text-primary)';
+            statusElement.style.border = '1px solid rgba(220, 53, 69, 0.3)';
             connectBtn.disabled = false;
         }
     });
@@ -150,13 +171,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const ipAddress = ipInput.value;
         if (!ipAddress) {
             statusElement.textContent = 'Please enter an IP address';
-            statusElement.style.backgroundColor = '#f2dede';
+            statusElement.className = '';
+            statusElement.style.backgroundColor = 'rgba(220, 53, 69, 0.2)';
+            statusElement.style.color = 'var(--text-primary)';
+            statusElement.style.border = '1px solid rgba(220, 53, 69, 0.3)';
             return;
         }
         
         connectBtn.disabled = true;
         statusElement.textContent = 'Connecting...';
+        statusElement.className = '';
         statusElement.style.backgroundColor = '#fff3cd'; // Yellow while connecting
+        statusElement.style.color = 'var(--text-primary)';
+        statusElement.style.border = '1px solid #ffeeba';
         
         try {
             // Race between connection attempt and timeout
@@ -166,9 +193,13 @@ document.addEventListener('DOMContentLoaded', () => {
             ]);
 
             statusElement.textContent = result;
+            statusElement.className = '';
             statusElement.style.backgroundColor = '#dff0d8';
+            statusElement.style.color = 'var(--text-primary)';
+            statusElement.style.border = '1px solid rgba(40, 167, 69, 0.3)';
             settingsModal.classList.remove('show');
-            settingsDragHandler.resetPosition();
+            const modalContent = settingsModal.querySelector('.modal-content');
+            modalContent.style.transform = 'translate(-50%, -50%)';
             
             // Only try to refresh tags if connection was successful
             const tags = await ipcRenderer.invoke('get-plc-tags');
@@ -179,7 +210,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 errorMessage = `Failed to connect to ${ipAddress} (timeout)`;
             }
             statusElement.textContent = `Error: ${errorMessage}`;
-            statusElement.style.backgroundColor = '#f2dede';
+            statusElement.className = '';
+            statusElement.style.backgroundColor = 'rgba(220, 53, 69, 0.2)';
+            statusElement.style.color = 'var(--text-primary)';
+            statusElement.style.border = '1px solid rgba(220, 53, 69, 0.3)';
             connectBtn.disabled = false;
             
             // Clear any existing connection
@@ -201,6 +235,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update the settings toggle handler
     toggleSettings.addEventListener('click', async () => {
         settingsModal.classList.add('show');
+        const modalContent = settingsModal.querySelector('.modal-content');
+        modalContent.style.transform = 'translate(-50%, -50%)';
         connectBtn.disabled = false;
         
         // Try to disconnect existing connection
@@ -215,24 +251,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 100);
     });
 
+    // Add click handlers for modal close buttons
     document.getElementById('settingsCancel').addEventListener('click', () => {
         settingsModal.classList.remove('show');
-        settingsDragHandler.resetPosition();
-        // Reset the IP input to the last known good value if needed
-        if (lastKnownGoodIp) {
-            ipInput.value = lastKnownGoodIp;
+        const modalContent = settingsModal.querySelector('.modal-content');
+        modalContent.style.transform = 'translate(-50%, -50%)';
+    });
+
+    document.getElementById('editCancel').addEventListener('click', () => {
+        editModal.classList.remove('show');
+        const modalContent = editModal.querySelector('.modal-content');
+        modalContent.style.transform = 'translate(-50%, -50%)';
+    });
+
+    // Close modals when clicking outside
+    window.addEventListener('click', (e) => {
+        if (e.target === settingsModal) {
+            settingsModal.classList.remove('show');
+            const modalContent = settingsModal.querySelector('.modal-content');
+            modalContent.style.transform = 'translate(-50%, -50%)';
+        }
+        if (e.target === editModal) {
+            editModal.classList.remove('show');
+            const modalContent = editModal.querySelector('.modal-content');
+            modalContent.style.transform = 'translate(-50%, -50%)';
         }
     });
 
     // Edit modal handlers
-    document.getElementById('editCancel').addEventListener('click', () => {
-        editModal.classList.remove('show');
-        editDragHandler.resetPosition();
-    });
-
     document.getElementById('editSave').addEventListener('click', () => {
         editModal.classList.remove('show');
-        editDragHandler.resetPosition();
+        const modalContent = editModal.querySelector('.modal-content');
+        modalContent.style.transform = 'translate(-50%, -50%)';
     });
 
     // Setup numeric keypads
@@ -261,11 +311,35 @@ function setupNumericKeypad(keypadElement, inputElement) {
         if (key === '⌫') {
             inputElement.value = currentValue.slice(0, -1);
         } else {
-            if (key === '.' && currentValue.includes('.')) {
-                return;
-            }
-            if (currentValue.length < 15) {
-                inputElement.value = currentValue + key;
+            // Special handling for IP address input
+            if (inputElement.id === 'plcIpAddress') {
+                // Allow up to 3 dots in IP address
+                if (key === '.') {
+                    const dotCount = (currentValue.match(/\./g) || []).length;
+                    if (dotCount < 3) {
+                        // Only add dot if previous character is a number
+                        if (currentValue.length > 0 && !isNaN(currentValue[currentValue.length - 1])) {
+                            inputElement.value = currentValue + key;
+                        }
+                    }
+                } else {
+                    // For numbers, check if we're in a valid position
+                    const parts = currentValue.split('.');
+                    const currentPart = parts[parts.length - 1];
+                    
+                    // Only allow 3 digits per octet
+                    if (currentPart.length < 3) {
+                        inputElement.value = currentValue + key;
+                    }
+                }
+            } else {
+                // Original handling for other numeric inputs
+                if (key === '.' && currentValue.includes('.')) {
+                    return;
+                }
+                if (currentValue.length < 15) {
+                    inputElement.value = currentValue + key;
+                }
             }
         }
     });
@@ -318,28 +392,52 @@ function valueFormatter(cell) {
     const type = data.type;
     const element = cell.getElement();
     
+    // Clear any existing classes first
+    element.classList.remove('bool-true', 'bool-false');
+    
     if (type === 'BOOL') {
         element.style.fontWeight = 'bold';
+        
+        // Create a span to hold the text with proper color
+        const valueSpan = document.createElement('span');
+        valueSpan.style.fontWeight = 'bold';
         
         // Check if the tag is being forced
         if (data.forcedState?.value === true) {
             const forcedValue = data.forcedStatus?.value;
-            element.style.color = forcedValue ? '#28a745' : '#dc3545';
-            return `${value ? 'TRUE' : 'FALSE'} (Forced ${forcedValue ? 'ON' : 'OFF'})`;
+            valueSpan.classList.add(forcedValue ? 'bool-true' : 'bool-false');
+            valueSpan.textContent = `${value ? 'TRUE' : 'FALSE'} (Forced ${forcedValue ? 'ON' : 'OFF'})`;
         } else {
-            element.style.color = value ? '#28a745' : '#dc3545';
-            return value ? 'TRUE' : 'FALSE';
+            valueSpan.classList.add(value ? 'bool-true' : 'bool-false');
+            valueSpan.textContent = value ? 'TRUE' : 'FALSE';
         }
+        
+        // Clear the cell and append the span
+        element.innerHTML = '';
+        element.appendChild(valueSpan);
+        
+        return "";  // Return empty as we've manually set the content
     } else {
         const numValue = parseFloat(value);
         if (!isNaN(numValue)) {
             element.style.fontWeight = 'bold';
-            element.style.color = numValue > 0 ? '#28a745' : '#dc3545';
+            
+            // Create a span for numeric values
+            const valueSpan = document.createElement('span');
+            valueSpan.classList.add(numValue > 0 ? 'bool-true' : 'bool-false');
+            
             // Show integers for Forced Count
             if (data.description.includes('Forced Count')) {
-                return Math.round(numValue).toString();
+                valueSpan.textContent = Math.round(numValue).toString();
+            } else {
+                valueSpan.textContent = numValue.toFixed(2);
             }
-            return numValue.toFixed(2);
+            
+            // Clear the cell and append the span
+            element.innerHTML = '';
+            element.appendChild(valueSpan);
+            
+            return "";  // Return empty as we've manually set the content
         }
         return value;
     }
@@ -420,10 +518,30 @@ function handleEditClick(e, cell) {
 // Column definitions
 function getControlsColumns() {
     return [
-        { title: "Description", field: "description", sorter: "string", widthGrow: 3 },
-        { title: "Address", field: "address", sorter: "string", widthGrow: 2 },
-        { title: "Value", field: "value", widthGrow: 2, formatter: valueFormatter },
-        { title: "Type", field: "type", sorter: "string", widthGrow: 1 },
+        { title: "Description", field: "description", sorter: "string", widthGrow: 3, headerSort: false, cssClass: "custom-cell" },
+        { title: "Address", field: "address", sorter: "string", widthGrow: 2, headerSort: false, cssClass: "custom-cell" },
+        { 
+            title: "Value", 
+            field: "value", 
+            widthGrow: 2, 
+            headerSort: false,
+            cssClass: "custom-cell",
+            formatter: function(cell) {
+                const value = cell.getValue();
+                const type = cell.getRow().getData().type;
+                
+                if (type === 'BOOL') {
+                    const element = document.createElement('span');
+                    element.style.fontWeight = 'bold';
+                    element.style.color = value ? '#4cd964' : '#ff6b6b';
+                    element.textContent = value ? 'TRUE' : 'FALSE';
+                    return element;
+                }
+                
+                return value;
+            }
+        },
+        { title: "Type", field: "type", sorter: "string", widthGrow: 1, headerSort: false, cssClass: "custom-cell" },
         {
             title: "Action",
             formatter: momentaryButtonFormatter,
@@ -431,17 +549,38 @@ function getControlsColumns() {
             widthGrow: 3,
             minWidth: 100,
             hozAlign: "center",
-            headerSort: false
+            headerSort: false,
+            cssClass: "custom-cell"
         }
     ];
 }
 
 function getIOColumns() {
     return [
-        { title: "Description", field: "description", sorter: "string", widthGrow: 3 },
-        { title: "Address", field: "address", sorter: "string", widthGrow: 2 },
-        { title: "Value", field: "value", widthGrow: 2, formatter: valueFormatter },
-        { title: "Type", field: "type", sorter: "string", widthGrow: 1 },
+        { title: "Description", field: "description", sorter: "string", widthGrow: 3, headerSort: false, cssClass: "custom-cell" },
+        { title: "Address", field: "address", sorter: "string", widthGrow: 2, headerSort: false, cssClass: "custom-cell" },
+        { 
+            title: "Value", 
+            field: "value", 
+            widthGrow: 2, 
+            headerSort: false,
+            cssClass: "custom-cell",
+            formatter: function(cell) {
+                const value = cell.getValue();
+                const type = cell.getRow().getData().type;
+                
+                if (type === 'BOOL') {
+                    const element = document.createElement('span');
+                    element.style.fontWeight = 'bold';
+                    element.style.color = value ? '#4cd964' : '#ff6b6b';
+                    element.textContent = value ? 'TRUE' : 'FALSE';
+                    return element;
+                }
+                
+                return value;
+            }
+        },
+        { title: "Type", field: "type", sorter: "string", widthGrow: 1, headerSort: false, cssClass: "custom-cell" },
         {
             title: "Action",
             formatter: forceButtonFormatter,
@@ -449,17 +588,47 @@ function getIOColumns() {
             widthGrow: 8,
             minWidth: 300,
             hozAlign: "center",
-            headerSort: false
+            headerSort: false,
+            cssClass: "custom-cell"
         }
     ];
 }
 
 function getAnalogColumns() {
     return [
-        { title: "Description", field: "description", sorter: "string", widthGrow: 3 },
-        { title: "Address", field: "address", sorter: "string", widthGrow: 2 },
-        { title: "Value", field: "value", widthGrow: 2, formatter: valueFormatter },
-        { title: "Type", field: "type", sorter: "string", widthGrow: 1 },
+        { title: "Description", field: "description", sorter: "string", widthGrow: 3, headerSort: false, cssClass: "custom-cell" },
+        { title: "Address", field: "address", sorter: "string", widthGrow: 2, headerSort: false, cssClass: "custom-cell" },
+        { 
+            title: "Value", 
+            field: "value", 
+            widthGrow: 2, 
+            headerSort: false,
+            cssClass: "custom-cell",
+            formatter: function(cell) {
+                const value = cell.getValue();
+                const type = cell.getRow().getData().type;
+                
+                if (type === 'BOOL') {
+                    const element = document.createElement('span');
+                    element.style.fontWeight = 'bold';
+                    element.style.color = value ? '#4cd964' : '#ff6b6b';
+                    element.textContent = value ? 'TRUE' : 'FALSE';
+                    return element;
+                } else {
+                    const numValue = parseFloat(value);
+                    if (!isNaN(numValue)) {
+                        const element = document.createElement('span');
+                        element.style.fontWeight = 'bold';
+                        element.style.color = numValue > 0 ? '#4cd964' : '#ff6b6b';
+                        element.textContent = numValue.toFixed(2);
+                        return element;
+                    }
+                }
+                
+                return value;
+            }
+        },
+        { title: "Type", field: "type", sorter: "string", widthGrow: 1, headerSort: false, cssClass: "custom-cell" },
         {
             title: "Action",
             formatter: function(cell) {
@@ -474,17 +643,47 @@ function getAnalogColumns() {
             widthGrow: 2,
             minWidth: 100,
             hozAlign: "center",
-            headerSort: false
+            headerSort: false,
+            cssClass: "custom-cell"
         }
     ];
 }
 
 function getStatsColumns() {
     return [
-        { title: "Description", field: "description", sorter: "string", widthGrow: 3 },
-        { title: "Address", field: "address", sorter: "string", widthGrow: 2 },
-        { title: "Value", field: "value", widthGrow: 2, formatter: valueFormatter },
-        { title: "Type", field: "type", sorter: "string", widthGrow: 1 }
+        { title: "Description", field: "description", sorter: "string", widthGrow: 3, headerSort: false, cssClass: "custom-cell" },
+        { title: "Address", field: "address", sorter: "string", widthGrow: 2, headerSort: false, cssClass: "custom-cell" },
+        { 
+            title: "Value", 
+            field: "value", 
+            widthGrow: 2, 
+            headerSort: false,
+            cssClass: "custom-cell",
+            formatter: function(cell) {
+                const value = cell.getValue();
+                const type = cell.getRow().getData().type;
+                
+                if (type === 'BOOL') {
+                    const element = document.createElement('span');
+                    element.style.fontWeight = 'bold';
+                    element.style.color = value ? '#4cd964' : '#ff6b6b';
+                    element.textContent = value ? 'TRUE' : 'FALSE';
+                    return element;
+                } else {
+                    const numValue = parseFloat(value);
+                    if (!isNaN(numValue)) {
+                        const element = document.createElement('span');
+                        element.style.fontWeight = 'bold';
+                        element.style.color = numValue > 0 ? '#4cd964' : '#ff6b6b';
+                        element.textContent = numValue.toFixed(0);
+                        return element;
+                    }
+                }
+                
+                return value;
+            }
+        },
+        { title: "Type", field: "type", sorter: "string", widthGrow: 1, headerSort: false, cssClass: "custom-cell" }
     ];
 }
 
@@ -526,9 +725,8 @@ function updateTables(tags) {
 
 // Add after your DOMContentLoaded event listener
 function makeDraggable(modalElement) {
+    const dragHandle = modalElement.querySelector('.modal-drag-handle');
     const modalContent = modalElement.querySelector('.modal-content');
-    const modalHeader = modalElement.querySelector('.modal-header');
-    
     let isDragging = false;
     let currentX;
     let currentY;
@@ -537,14 +735,16 @@ function makeDraggable(modalElement) {
     let xOffset = 0;
     let yOffset = 0;
 
-    modalHeader.addEventListener('mousedown', dragStart);
-    document.addEventListener('mousemove', drag);
-    document.addEventListener('mouseup', dragEnd);
-
     function dragStart(e) {
-        if (e.target === modalHeader || e.target.closest('.modal-header')) {
+        if (e.type === "touchstart") {
+            initialX = e.touches[0].clientX - xOffset;
+            initialY = e.touches[0].clientY - yOffset;
+        } else {
             initialX = e.clientX - xOffset;
             initialY = e.clientY - yOffset;
+        }
+
+        if (e.target === dragHandle) {
             isDragging = true;
             modalContent.classList.add('dragging');
         }
@@ -553,12 +753,19 @@ function makeDraggable(modalElement) {
     function drag(e) {
         if (isDragging) {
             e.preventDefault();
-            currentX = e.clientX - initialX;
-            currentY = e.clientY - initialY;
+
+            if (e.type === "touchmove") {
+                currentX = e.touches[0].clientX - initialX;
+                currentY = e.touches[0].clientY - initialY;
+            } else {
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+            }
+
             xOffset = currentX;
             yOffset = currentY;
-            
-            modalContent.style.transform = `translate(${currentX}px, ${currentY}px)`;
+
+            setTranslate(currentX, currentY, modalContent);
         }
     }
 
@@ -569,15 +776,61 @@ function makeDraggable(modalElement) {
         modalContent.classList.remove('dragging');
     }
 
-    // Reset position when modal is closed
-    function resetPosition() {
-        xOffset = 0;
-        yOffset = 0;
-        modalContent.style.transform = 'translate(-50%, -50%)';
+    function setTranslate(xPos, yPos, el) {
+        el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
     }
 
-    return { resetPosition };
+    // Add event listeners
+    dragHandle.addEventListener("mousedown", dragStart);
+    dragHandle.addEventListener("touchstart", dragStart);
+    document.addEventListener("mousemove", drag);
+    document.addEventListener("touchmove", drag);
+    document.addEventListener("mouseup", dragEnd);
+    document.addEventListener("touchend", dragEnd);
+
+    // Return cleanup function
+    return function cleanup() {
+        dragHandle.removeEventListener("mousedown", dragStart);
+        dragHandle.removeEventListener("touchstart", dragStart);
+        document.removeEventListener("mousemove", drag);
+        document.removeEventListener("touchmove", drag);
+        document.removeEventListener("mouseup", dragEnd);
+        document.removeEventListener("touchend", dragEnd);
+    };
 }
 
 // Add this at the top with other global variables
-let lastKnownGoodIp = '192.168.0.99'; 
+let lastKnownGoodIp = '192.168.0.99';
+
+// Dark mode functionality
+function initializeDarkMode() {
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    // Check for saved theme preference or use system preference
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+        document.body.dataset.theme = savedTheme;
+        updateDarkModeButton(savedTheme === 'dark');
+    } else if (prefersDarkScheme.matches) {
+        document.body.dataset.theme = 'dark';
+        updateDarkModeButton(true);
+    }
+
+    // Toggle dark mode
+    darkModeToggle.addEventListener('click', () => {
+        const isDark = document.body.dataset.theme === 'dark';
+        document.body.dataset.theme = isDark ? 'light' : 'dark';
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        updateDarkModeButton(!isDark);
+    });
+}
+
+function updateDarkModeButton(isDark) {
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const modeText = darkModeToggle.querySelector('.mode-text');
+    modeText.textContent = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+}
+
+// Initialize dark mode when the document is ready
+document.addEventListener('DOMContentLoaded', initializeDarkMode); 
